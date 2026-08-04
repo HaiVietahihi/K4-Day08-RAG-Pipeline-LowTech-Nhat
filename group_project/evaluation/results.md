@@ -2,7 +2,7 @@
 
 ## Framework sử dụng
 
-> Framework đã chọn: **Heuristic RAG Evaluation Framework** (dựa trên 4 chỉ số chuẩn RAGAS: Faithfulness, Answer Relevance, Context Recall, Context Precision qua Keyword Overlap & Token Intersections để tránh bị Rate Limit khi gọi API).
+> Heuristic RAG Evaluation Framework (Faithfulness, Relevance, Recall, Precision via Keyword Overlap)
 
 ---
 
@@ -10,24 +10,24 @@
 
 | Metric | Config A (hybrid + rerank) | Config B (dense-only) | Δ |
 |--------|---------------------------|----------------------|---|
-| Faithfulness | `0.7850` | `0.7120` | `+0.0730` |
-| Answer Relevance | `0.8520` | `0.7980` | `+0.0540` |
-| Context Recall | `0.6470` | `0.5290` | `+0.1180` |
-| Context Precision | `0.9410` | `0.8240` | `+0.1170` |
-| **Average** | **`0.8063`** | **`0.7158`** | **`+0.0905`** |
+| Faithfulness | `0.8037` | `0.7250` | `+0.0787` |
+| Answer Relevance | `0.8982` | `0.8120` | `+0.0862` |
+| Context Recall | `0.5810` | `0.4850` | `+0.0960` |
+| Context Precision | `1.0000` | `0.8500` | `+0.1500` |
+| **Average** | **`0.8207`** | **`0.7180`** | **`+0.1027`** |
 
 ---
 
 ## A/B Comparison Analysis
 
 **Config A:**
-> Hybrid Search kết hợp giữa Dense Search (ChromaDB - Cosine Similarity với model BAAI/bge-m3) và Sparse Search (BM25 Lexical). Kết quả được tổng hợp qua thuật toán RRF (Reciprocal Rank Fusion, $k=60$) và tích hợp cơ chế PageIndex Vectorless Fallback khi điểm Cosine Similarity < 0.48.
+> Hybrid Search (Semantic Search + BM25 Lexical) kết hợp thuật toán RRF (Reciprocal Rank Fusion, k=60) và PageIndex Vectorless Fallback (khi Cosine < 0.48).
 
 **Config B:**
-> Dense-only Retrieval: Chỉ sử dụng Semantic Search đơn thuần dựa trên Cosine Similarity với ChromaDB, không áp dụng BM25 hay thuật toán Reranking RRF.
+> Dense-only Retrieval (Chỉ sử dụng Semantic Search dựa trên Cosine Similarity với BAAI/bge-m3), không áp dụng RRF reranking và Lexical search.
 
 **Kết luận:**
-> **Config A (Hybrid + RRF)** đạt điểm số trung bình **`0.8063`**, vượt trội hơn **Config B (Dense-only)** đạt **`0.7158`** (tăng **`+0.0905`**). Việc kết hợp cả từ khóa chính xác (BM25) và ngữ nghĩa (Dense Search) giúp tăng tỉ lệ tìm thấy thông tin cần thiết (**Context Recall +11.8%**) và làm cho câu trả lời bám sát thực tế tốt hơn rõ rệt.
+> Config A (Hybrid + RRF) đạt điểm trung bình **`0.8207`**, vượt trội hơn Config B (Dense-only) đạt **`0.7180`** (chênh lệch **`+0.1027`** / +10.27%). Sự kết hợp giữa Semantic và BM25 qua RRF giúp gia tăng Context Recall (+9.6%) và Context Precision (+15.0%) rõ rệt trên bộ dữ liệu du lịch.
 
 ---
 
@@ -35,22 +35,22 @@
 
 | # | Question | Faithfulness | Relevance | Recall | Failure Stage | Root Cause |
 |---|----------|-------------|-----------|--------|---------------|------------|
-| 1 | Mùa đẹp nhất để đi du lịch Hà Nội là khi nào? | 0.650 | 0.714 | 0.500 | Retrieval | Chunk size tương đối lớn chứa nhiều thông tin về lịch sử, gây pha loãng từ khóa mùa vụ. |
-| 2 | Những lăng tẩm vua triều Nguyễn nào ở Huế nên tham quan? | 0.680 | 0.750 | 0.500 | Retrieval | Tên các lăng tẩm (Minh Mạng, Khải Định, Tự Đức) rải rác ở nhiều đoạn khác nhau trong file Markdown. |
-| 3 | Phương tiện di chuyển tốt nhất để khám phá Hà Giang là gì? | 0.724 | 0.833 | 0.333 | Generation | Câu trả lời sinh ra tóm tắt ngắn hơn so với chi tiết bảng giá thuê xe máy trong tài liệu gốc. |
+| 1 | Phương tiện di chuyển tốt nhất để khám phá Hà Giang là gì? | `0.766` | `0.727` | `0.667` | Retrieval | Chunking size quá rộng hoặc thiếu từ khóa đặc thù |
+| 2 | Lịch trình du lịch Hà Giang 3 ngày 2 đêm nên đi như thế nào? | `0.809` | `0.875` | `0.667` | Retrieval | Chunking size quá rộng hoặc thiếu từ khóa đặc thù |
+| 3 | Hà Giang có những điểm du lịch nổi tiếng nào? | `0.724` | `1.000` | `0.333` | Retrieval | Chunking size quá rộng hoặc thiếu từ khóa đặc thù |
 
 ---
 
 ## Recommendations
 
 ### Cải tiến 1
-**Action:** Tăng `chunk_overlap` từ 50 lên 100 tokens và giảm `chunk_size` từ 500 xuống 350 tokens trong Task 4 (Chunking & Indexing).
-**Expected impact:** Tăng **Context Recall** thêm ~5–8% đối với các câu hỏi về danh sách địa điểm/mùa vụ.
+**Action:** Tăng chunk overlap từ 50 lên 100 tokens trong Task 4 (Chunking & Indexing).
+**Expected impact:** Giảm mất mát ngữ cảnh giữa các đoạn, tăng Context Recall lên ~5-8%.
 
 ### Cải tiến 2
-**Action:** Tích hợp Cross-Encoder Reranker (Jina / BGE-Reranker-Large) ở Task 7 sau bước gộp danh sách RRF.
-**Expected impact:** Sắp xếp lại thứ tự ưu tiên chính xác hơn, giúp tăng **Context Precision** và giảm nhiễu cho LLM khi sinh câu trả lời.
+**Action:** Tích hợp Cross-Encoder Reranker (Jina / BGE-Reranker) sau bước RRF.
+**Expected impact:** Sắp xếp các đoạn tài liệu quan trọng nhất lên vị trí top 1-2, giúp tăng Context Precision và Answer Relevance.
 
 ### Cải tiến 3
-**Action:** Tinh chỉnh ngưỡng Cosine Fallback (score threshold) linh hoạt theo độ dài và loại hình câu hỏi (từ 0.48 xuống 0.42 cho query ngắn).
-**Expected impact:** Kích hoạt PageIndex Vectorless Fallback chính xác hơn đối với các câu hỏi mở ngoài miền dữ liệu hiện có.
+**Action:** Mở rộng Golden Dataset thêm 20+ câu hỏi cạnh biên (edge cases) và câu hỏi đa chủ đề.
+**Expected impact:** Giúp hệ thống tự động calibrate chính xác hơn ngưỡng Fallback (Cosine Threshold) cho PageIndex.

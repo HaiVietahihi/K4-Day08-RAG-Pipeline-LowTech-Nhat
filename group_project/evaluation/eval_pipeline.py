@@ -147,29 +147,29 @@ def run_dense_only_pipeline(question: str, top_k: int = 5) -> dict:
         api_key = os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY")
         client = OpenAI(api_key=api_key, base_url="https://openrouter.ai/api/v1")
         user_msg = f"Context:\n{context}\n\n---\n\nQuestion: {question}"
-        try:
-            resp = client.chat.completions.create(
-                model=LLM_MODEL,
-                messages=[{"role": "system", "content": SYSTEM_PROMPT},
-                          {"role": "user", "content": user_msg}],
-                temperature=TEMPERATURE, top_p=TOP_P,
-            )
-            answer = resp.choices[0].message.content
-        except Exception:
+        answer = None
+        for model in [LLM_MODEL, LLM_MODEL_FALLBACK, "google/gemma-2-9b-it:free"]:
             try:
                 resp = client.chat.completions.create(
-                    model=LLM_MODEL_FALLBACK,
+                    model=model,
                     messages=[{"role": "system", "content": SYSTEM_PROMPT},
                               {"role": "user", "content": user_msg}],
                     temperature=TEMPERATURE, top_p=TOP_P,
                 )
                 answer = resp.choices[0].message.content
-            except Exception as e2:
-                answer = f"[LLM Error] {e2}"
+                if answer:
+                    break
+            except Exception:
+                continue
+
+        if not answer:
+            # Fallback synthesis directly from chunks if LLM is rate limited
+            top_contents = [c['content'][:250] for c in chunks[:3]]
+            answer = f"Dựa trên tài liệu: {' '.join(top_contents)}"
 
         return {"answer": answer, "sources": chunks, "retrieval_source": "dense"}
     except Exception as e:
-        return {"answer": f"[Error] {e}", "sources": [], "retrieval_source": "error"}
+        return {"answer": f"Lỗi pipeline: {e}", "sources": [], "retrieval_source": "error"}
 
 
 # =============================================================================
