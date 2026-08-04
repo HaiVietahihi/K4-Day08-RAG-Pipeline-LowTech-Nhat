@@ -37,8 +37,8 @@ TOP_P = 0.9
 # Chọn 0.3 vì: RAG cần factual, ít sáng tạo
 TEMPERATURE = 0.3
 
-LLM_MODEL = "anthropic/claude-sonnet-4-5"  # Model tốt cho tiếng Việt
-LLM_MODEL_FALLBACK = "google/gemma-3-1b-it:free"  # Fallback free nếu hết credit
+LLM_MODEL = "meta-llama/llama-3.3-70b-instruct:free"
+LLM_MODEL_FALLBACK = "qwen/qwen-2.5-72b-instruct:free"
 
 
 # =============================================================================
