@@ -27,7 +27,9 @@ def get_embedding_model():
     if _MODEL_CACHE is None:
         try:
             from sentence_transformers import SentenceTransformer
-            model_name = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+            # Mặc định phải trùng model của Task 4 (BAAI/bge-m3, 1024 chiều), nếu không
+            # vector query sẽ lệch số chiều với vector đã index trong chroma_db/.
+            model_name = os.getenv("EMBEDDING_MODEL", "BAAI/bge-m3")
             _MODEL_CACHE = SentenceTransformer(model_name)
         except Exception as e:
             print(f"  [Info] Local SentenceTransformer unavailable ({e}), using fallback embedder...")
@@ -37,6 +39,18 @@ def get_embedding_model():
 
 def embed_query_text(query: str, dim: int = 384) -> list[float]:
     """Tạo vector embedding cho query string."""
+    # Ưu tiên dùng đúng hàm embed của Task 4: query và document được embed bằng cùng
+    # model / cùng provider (EMBEDDING_PROVIDER trong .env) nên luôn cùng không gian
+    # vector — đổi provider ở Task 4 là Task 5 tự đổi theo, không phải sửa 2 nơi.
+    try:
+        try:
+            from .task4_chunking_indexing import embed_texts
+        except ImportError:  # khi chạy trực tiếp: python src/task5_semantic_search.py
+            from task4_chunking_indexing import embed_texts
+        return embed_texts([query])[0]
+    except Exception:
+        pass
+
     # Try sentence-transformers first
     model = get_embedding_model()
     if model:
@@ -161,8 +175,11 @@ def semantic_search(query: str, top_k: int = 10, use_hyde: bool = False) -> list
         # Lấy sample embedding từ collection để biết dimension thực tế
         sample_item = collection.get(limit=1, include=["embeddings"])
         dim = 384
-        if sample_item and sample_item.get("embeddings") and len(sample_item["embeddings"]) > 0:
-            dim = len(sample_item["embeddings"][0])
+        # Dùng len() chứ không dùng truthiness: chromadb 1.x trả embeddings là numpy
+        # array, `if array` sẽ ném ValueError "truth value of an array is ambiguous".
+        sample_embeddings = sample_item.get("embeddings") if sample_item else None
+        if sample_embeddings is not None and len(sample_embeddings) > 0:
+            dim = len(sample_embeddings[0])
 
         query_vector = embed_query_text(search_text, dim=dim)
 
