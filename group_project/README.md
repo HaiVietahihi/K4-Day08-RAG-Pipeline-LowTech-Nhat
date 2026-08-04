@@ -1,4 +1,4 @@
-# Bài Tập Nhóm — E-commerce Support RAG Chatbot
+# Bài Tập Nhóm — Trợ lý du lịch thông minh
 
 ## Mục Tiêu
 
@@ -8,7 +8,7 @@ Sau khi hoàn thành bài cá nhân, nhóm ngồi lại để xây dựng **1 tr
 
 ## Yêu cầu 1: Sản phẩm nhóm RAG Chatbot
 
-Xây dựng chatbot trả lời câu hỏi về chính sách thương mại điện tử và hỗ trợ khách hàng liên quan.
+Xây dựng chatbot Trợ Lý Hướng Dẫn Viên Du Lịch Thông Minh
 
 **Yêu cầu:**
 - Giao diện chat (Streamlit / Gradio / Chainlit)
@@ -18,7 +18,7 @@ Xây dựng chatbot trả lời câu hỏi về chính sách thương mại đi�
 
 **Stack gợi ý:**
 ```
-Chainlit/Streamlit → Retrieval (Task 9) → Generation (Task 10) → Display
+Streamlit → Retrieval (Task 9) → Generation (Task 10) → Display
 ```
 
 ---
@@ -50,10 +50,10 @@ Xem code mẫu (DeepEval/RAGAS/TruLens) chi tiết trong `README.md` gốc mục
 
 ### Deliverable Evaluation
 
-- [ ] File `group_project/evaluation/golden_dataset.json` — 15+ cặp Q&A
-- [ ] File `group_project/evaluation/eval_pipeline.py` — script chạy evaluation
-- [ ] File `group_project/evaluation/results.md` — bảng điểm + phân tích
-- [ ] So sánh A/B ít nhất 2 configs
+- [x] File `group_project/evaluation/golden_dataset.json` — 15+ cặp Q&A
+- [x] File `group_project/evaluation/eval_pipeline.py` — script chạy evaluation
+- [x] File `group_project/evaluation/results.md` — bảng điểm + phân tích
+- [x] So sánh A/B ít nhất 2 configs
 
 ---
 
@@ -70,19 +70,50 @@ Xem code mẫu (DeepEval/RAGAS/TruLens) chi tiết trong `README.md` gốc mục
 ## Kiến Trúc Hệ Thống
 
 ```
-[Vẽ diagram kiến trúc ở đây]
+┌───────────────────┐        ┌──────────────────────┐
+│  User Interface   │        │   Retrieval Stage    │
+│   (Streamlit)     │        │                      │
+│                   │        │  ┌────────────────┐  │
+│  Hỏi câu hỏi      │───────►│  │  Hybrid Search │  │
+│                   │        │  │ (BM25 + Dense) │  │
+└───────────────────┘        │  │  ↑ Re-ranking  │  │
+                             │  │  └────────────────┘  │
+                             │  └──────────────────────┘
+                                          │ (top-K chunks)
+                                          v
+                             ┌──────────────────────┐
+                             │   Generation Stage   │
+                             │                      │
+                             │  ┌────────────────┐  │
+                             │  │   Citation-   │  │
+                             │  │   aware LLM    │  │
+                             │  │  (OpenRouter)  │  │
+                             │  │  ┌────────────┐│  │
+                             │  │  │  Context   ││  │
+                             │  │  │  Chunking  ││  │
+                             │  │  │  + Prompt  ││  │
+                             │  │  └────────────┘│  │
+                             │  └────────────────┘  │
+                             └──────────────────────┘
+                                          │
+                                          v
+                                 ┌───────────────────┐
+                                 │   Answer with     │
+                                 │    Citations      │
+                                 └───────────────────┘
+
 ```
 
 ---
 
 ## Phân Công Công Việc
 
-| Thành viên | MSSV | Nhiệm vụ | Trạng thái |
-|-----------|------|----------|------------|
-| | | | |
-| | | | |
-| | | | |
-| | | | |
+| Thành viên        | MSSV        | Nhiệm vụ                                                                                  | Trạng thái |
+| -------------------| -------------| -------------------------------------------------------------------------------------------| ------------|
+| Nguyễn Việt Hải   | 2A202601656 | Điều phối tiến độ, ghép code tổng hợp                                                     | Hoàn thành |
+| Nguyễn Hoàng Minh | 2A202601764 | Phụ trách thu thập, chuẩn hoá dữ liệu                                                     | Hoàn thành |
+| Đoàn Văn Tuyền    | 2A202601374 | Tạo golden_dataset.json (15 câu hỏi), thực thi RAGAS eval_pipeline.py và viết results.md. | Hoàn thành |
+| Nguyễn Thái Tú    | 2A202601504 | Xây dựng giao diện Streamlit app.py và nối LLM Generation                                 | Hoàn thành |
 
 ---
 
