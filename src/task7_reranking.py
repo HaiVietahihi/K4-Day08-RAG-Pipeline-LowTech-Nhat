@@ -1,12 +1,23 @@
 """
 Task 7 — Reranking Module.
 
-Chọn 1 trong các phương pháp:
-    - Cross-encoder reranker: Jina Reranker v2 (multilingual) hoặc Qwen3-Reranker
-    - MMR (Maximal Marginal Relevance): tự implement
-    - RRF (Reciprocal Rank Fusion): tự implement — khuyến nghị vì không cần API key
+Đã implement cả 3 phương pháp, chọn qua tham số method của rerank():
 
-Nếu dùng MMR hoặc RRF, đảm bảo hiểu và giải thích được cơ chế.
+    - "rrf"           — Reciprocal Rank Fusion, MẶC ĐỊNH của bài lab. Gộp thứ hạng từ
+                        nhiều ranker (Semantic + BM25). Không cần model, không API key.
+    - "mmr"           — Maximal Marginal Relevance. Chọn đoạn vừa liên quan vừa ĐA DẠNG,
+                        tránh 5 kết quả nói cùng một ý. Cần embedding (tự lấy từ Task 4).
+    - "cross_encoder" — Chấm lại điểm từng cặp (query, đoạn văn) bằng Jina Reranker v2
+                        API. Chính xác nhất nhưng chậm nhất và cần JINA_API_KEY.
+                        Khác bi-encoder (Task 4/5): bi-encoder mã hoá query và đoạn văn
+                        RIÊNG rồi mới so cosine, cross-encoder đưa CẶP vào cùng một lượt
+                        nên "đọc" được quan hệ hai bên → chỉ dùng rerank top-N, không
+                        dùng quét cả kho.
+
+Dùng cái nào khi nào:
+    - Có 2 nguồn kết quả (dense + sparse) và cần gộp công bằng   → rrf
+    - Kết quả bị trùng lặp nội dung, cần trải rộng góc nhìn      → mmr
+    - Cần độ chính xác cao nhất cho top-N nhỏ, chấp nhận chậm    → cross_encoder
 
 Lưu ý quan trọng về RRF (sẽ dùng lại ở Task 9): điểm RRF fused CHỈ phụ thuộc thứ hạng,
 không phải độ tương đồng thật. Top-1 sau khi fuse luôn xấp xỉ 1/(k+1) ≈ 0.0164 (k=60),
@@ -14,7 +25,17 @@ bất kể nội dung đó có thật sự liên quan đến câu hỏi hay khô
 quyết định fallback ở Task 9 — xem ghi chú ở đó.
 """
 
+import math
+import os
 from typing import Union, cast
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Cross-encoder qua Jina Reranker API — bản v2 multilingual, đọc được tiếng Việt.
+# Chạy trên server của Jina nên không phải tải model ~1GB về máy, chỉ cần JINA_API_KEY.
+JINA_RERANK_MODEL = "jina-reranker-v2-base-multilingual"
 
 
 def rerank_cross_encoder(
@@ -31,30 +52,54 @@ def rerank_cross_encoder(
     Returns:
         List of top_k candidates, re-scored và sorted by rerank_score descending.
     """
-    # TODO: Implement cross-encoder reranking
-    #
-    # Option A: Jina Reranker API
-    # import requests
-    # response = requests.post(
-    #     "https://api.jina.ai/v1/rerank",
-    #     headers={"Authorization": f"Bearer {JINA_API_KEY}"},
-    #     json={
-    #         "model": "jina-reranker-v2-base-multilingual",
-    #         "query": query,
-    #         "documents": [c["content"] for c in candidates],
-    #         "top_n": top_k
-    #     }
-    # )
-    # reranked = response.json()["results"]
-    # return [
-    #     {**candidates[r["index"]], "score": r["relevance_score"]}
-    #     for r in reranked
-    # ]
-    #
-    # Option B: Local model (Qwen3-Reranker)
-    # from transformers import AutoModelForSequenceClassification, AutoTokenizer
-    # ...
-    raise NotImplementedError("Implement rerank_cross_encoder")
+    if not candidates:
+        return []
+
+    api_key = os.getenv("JINA_API_KEY")
+    if not api_key:
+        raise RuntimeError(
+            "Thiếu JINA_API_KEY trong .env — cross-encoder dùng Jina Reranker API. "
+            "Không có key thì dùng method='rrf' hoặc method='mmr' (đều chạy offline)."
+        )
+
+    import requests
+
+    response = requests.post(
+        "https://api.jina.ai/v1/rerank",
+        headers={"Authorization": f"Bearer {api_key}"},
+        json={
+            "model": JINA_RERANK_MODEL,
+            "query": query,
+            "documents": [c["content"] for c in candidates],
+            "top_n": top_k,
+        },
+        timeout=30,
+    )
+    response.raise_for_status()
+    results = response.json()["results"]
+    return [
+        {
+            **candidates[r["index"]],
+            "original_score": candidates[r["index"]].get("score"),
+            "score": float(r["relevance_score"]),
+            "reranker": "jina",
+        }
+        for r in results[:top_k]
+    ]
+
+
+
+
+def cosine_sim(a: list[float], b: list[float]) -> float:
+    """Cosine similarity giữa 2 vector: dot(a,b) / (|a| * |b|). Trả 0.0 nếu vector rỗng."""
+    if not a or not b:
+        return 0.0
+    dot = sum(x * y for x, y in zip(a, b))
+    norm_a = math.sqrt(sum(x * x for x in a))
+    norm_b = math.sqrt(sum(y * y for y in b))
+    if norm_a == 0 or norm_b == 0:
+        return 0.0
+    return dot / (norm_a * norm_b)
 
 
 def rerank_mmr(
@@ -77,37 +122,51 @@ def rerank_mmr(
     Returns:
         List of top_k candidates selected by MMR.
     """
-    # TODO: Implement MMR
-    #
-    # selected = []
-    # remaining = list(range(len(candidates)))
-    #
-    # for _ in range(min(top_k, len(candidates))):
-    #     best_idx = None
-    #     best_score = float('-inf')
-    #
-    #     for idx in remaining:
-    #         # Relevance to query
-    #         relevance = cosine_sim(query_embedding, candidates[idx]["embedding"])
-    #
-    #         # Max similarity to already selected
-    #         max_sim_to_selected = 0
-    #         for sel_idx in selected:
-    #             sim = cosine_sim(candidates[idx]["embedding"], candidates[sel_idx]["embedding"])
-    #             max_sim_to_selected = max(max_sim_to_selected, sim)
-    #
-    #         # MMR score
-    #         mmr_score = lambda_param * relevance - (1 - lambda_param) * max_sim_to_selected
-    #
-    #         if mmr_score > best_score:
-    #             best_score = mmr_score
-    #             best_idx = idx
-    #
-    #     selected.append(best_idx)
-    #     remaining.remove(best_idx)
-    #
-    # return [candidates[i] for i in selected]
-    raise NotImplementedError("Implement rerank_mmr")
+    usable = [c for c in candidates if c.get("embedding")]
+    if not usable:
+        raise ValueError(
+            "rerank_mmr cần mỗi candidate có key 'embedding'. "
+            "Dùng rerank(query, candidates, method='mmr') để tự embed giúp."
+        )
+
+    selected: list[int] = []
+    remaining = list(range(len(usable)))
+
+    for _ in range(min(top_k, len(usable))):
+        best_idx = None
+        best_score = float("-inf")
+
+        for idx in remaining:
+            # Độ liên quan với câu hỏi
+            relevance = cosine_sim(query_embedding, usable[idx]["embedding"])
+
+            # Độ giống nhất với những đoạn ĐÃ chọn — càng giống thì càng bị trừ điểm,
+            # đó là cách MMR loại bỏ các đoạn trùng lặp nội dung.
+            max_sim_to_selected = 0.0
+            for sel_idx in selected:
+                sim = cosine_sim(usable[idx]["embedding"], usable[sel_idx]["embedding"])
+                max_sim_to_selected = max(max_sim_to_selected, sim)
+
+            mmr_score = (
+                lambda_param * relevance - (1 - lambda_param) * max_sim_to_selected
+            )
+
+            if mmr_score > best_score:
+                best_score = mmr_score
+                best_idx = idx
+
+        if best_idx is None:
+            break
+        selected.append(best_idx)
+        remaining.remove(best_idx)
+
+        item = dict(usable[best_idx])
+        item["original_score"] = item.get("score")
+        item["score"] = best_score
+        item["reranker"] = "mmr"
+        usable[best_idx] = item
+
+    return [usable[i] for i in selected]
 
 
 RRF_K = 60  # hằng số làm mượt, theo paper Cormack et al. 2009
@@ -239,8 +298,21 @@ def rerank(
     if method == "cross_encoder":
         return rerank_cross_encoder(query, flat, top_k)
     elif method == "mmr":
-        # Cần query_embedding - embed query trước
-        raise NotImplementedError("Call rerank_mmr with query_embedding")
+        # MMR cần vector: embed query và những candidate chưa có sẵn 'embedding',
+        # dùng đúng embed_texts() của Task 4 để cùng không gian vector.
+        try:
+            from .task4_chunking_indexing import embed_texts
+        except ImportError:  # khi chạy trực tiếp: python src/task7_reranking.py
+            from task4_chunking_indexing import embed_texts
+
+        missing = [c for c in flat if not c.get("embedding")]
+        if missing:
+            vectors = embed_texts([c["content"] for c in missing])
+            for c, vec in zip(missing, vectors):
+                c["embedding"] = vec
+
+        query_embedding = embed_texts([query])[0]
+        return rerank_mmr(query_embedding, flat, top_k=top_k)
     elif method == "rrf":
         return rerank_rrf(ranked_lists, top_k=top_k)
     else:
@@ -342,18 +414,95 @@ def demo_real_data(query: str, top_k: int = 5) -> None:
               f"{r['content'][:70].replace(chr(10), ' ')}...")
 
 
+def demo_mmr(query: str, top_k: int = 5) -> None:
+    """So sánh top-k của Semantic thuần và của MMR để thấy tác dụng đa dạng hoá."""
+    try:
+        from .task5_semantic_search import semantic_search
+    except ImportError:
+        from task5_semantic_search import semantic_search
+
+    candidates = semantic_search(query, top_k=15)
+    if not candidates:
+        print("  [Info] Không có kết quả semantic để chạy MMR.")
+        return
+
+    def mo_ta(items):
+        return [f"{c['metadata'].get('source', '?')}#{c['metadata'].get('chunk_index', '?')}"
+                for c in items]
+
+    print(f"  Semantic top-{top_k} (chỉ xét liên quan): {mo_ta(candidates[:top_k])}")
+
+    # Embed 1 lần rồi tái dùng cho mọi λ
+    query_vec = _query_vector(query)
+    with_vectors = rerank(query, [dict(c) for c in candidates], top_k=len(candidates), method="mmr")
+    by_key = {(c["metadata"].get("source"), c["metadata"].get("chunk_index")): c
+              for c in with_vectors}
+    pool = [dict(by_key[(c["metadata"].get("source"), c["metadata"].get("chunk_index"))])
+            for c in candidates]
+
+    for lam in (0.7, 0.3):
+        picked = rerank_mmr(query_vec, [dict(c) for c in pool], top_k=top_k, lambda_param=lam)
+        print(f"  MMR λ={lam} ({'ưu tiên liên quan' if lam > 0.5 else 'ưu tiên đa dạng'}): "
+              f"{mo_ta(picked)}")
+
+
+def _query_vector(query: str) -> list[float]:
+    """Embed query bằng đúng hàm của Task 4."""
+    try:
+        from .task4_chunking_indexing import embed_texts
+    except ImportError:
+        from task4_chunking_indexing import embed_texts
+    return embed_texts([query])[0]
+
+
+def demo_cross_encoder(query: str, top_k: int = 3) -> None:
+    """Chấm lại top ứng viên bằng cross-encoder (Jina API hoặc model local)."""
+    try:
+        from .task5_semantic_search import semantic_search
+    except ImportError:
+        from task5_semantic_search import semantic_search
+
+    candidates = semantic_search(query, top_k=8)
+    if not candidates:
+        print("  [Info] Không có kết quả semantic để rerank.")
+        return
+
+    print(f"  Model: {JINA_RERANK_MODEL} (Jina Reranker API)")
+    reranked = rerank_cross_encoder(query, candidates, top_k=top_k)
+    for i, r in enumerate(reranked, 1):
+        m = r["metadata"]
+        print(f"    {i}. [ce={r['score']:.4f} | cosine gốc={r['original_score']:.3f}] "
+              f"{m.get('source', '?')}#{m.get('chunk_index', '?')} — "
+              f"{r['content'][:60].replace(chr(10), ' ')}...")
+
+
+DEMO_QUERY = "kinh nghiệm du lịch Hà Giang tự túc"
+
+
 if __name__ == "__main__":
     print("=" * 70)
-    print(f"Task 7: Reranking — Reciprocal Rank Fusion (k={RRF_K})")
+    print(f"Task 7: Reranking — RRF (k={RRF_K}) | MMR | Cross-encoder")
     print("  RRF(d) = Σ 1 / (k + rank_r(d))")
     print("=" * 70)
 
-    print("\n--- Kiểm tra công thức RRF cân bằng Semantic vs BM25 ---")
+    print("\n--- [1] Kiểm tra công thức RRF cân bằng Semantic vs BM25 ---")
     ok = verify_rrf_balance()
     print(f"\n  → {'TẤT CẢ 4 PHÉP THỬ ĐẠT' if ok else 'CÓ PHÉP THỬ KHÔNG ĐẠT'}")
 
-    print("\n--- Gộp kết quả thật từ Task 5 + Task 6 ---")
+    print("\n--- [2] RRF trên dữ liệu thật (Task 5 + Task 6) ---")
     try:
-        demo_real_data("kinh nghiệm du lịch Hà Giang tự túc")
+        demo_real_data(DEMO_QUERY)
     except Exception as e:
         print(f"  [Info] Bỏ qua demo dữ liệu thật: {e}")
+
+    print("\n--- [3] MMR: liên quan vs đa dạng ---")
+    try:
+        demo_mmr(DEMO_QUERY)
+    except Exception as e:
+        print(f"  [Info] Bỏ qua demo MMR: {e}")
+
+    print("\n--- [4] Cross-encoder: chấm lại từng cặp (query, đoạn văn) ---")
+    try:
+        demo_cross_encoder(DEMO_QUERY)
+    except Exception as e:
+        print(f"  [Info] Bỏ qua demo cross-encoder: {e}")
