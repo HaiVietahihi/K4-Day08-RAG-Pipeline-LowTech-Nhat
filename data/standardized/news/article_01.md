@@ -1,0 +1,25 @@
+# Review nhanh tour du lịch tham quan Bắc Ninh miễn phí và kinh nghiệm du lịch tâm linh, văn hóa
+
+**Source:** https://www.facebook.com/TravelokaVN/posts/n%C3%B3ng-review-nhanh-tour-du-l%E1%BB%8Bch-tham-quan-b%E1%BA%AFc-ninh-mi%E1%BB%85n-ph%C3%AD-v%C3%A0-kinh-nghi%E1%BB%87m-du-l%E1%BB%8Bc/986735333618784/
+**Crawled:** 2026-08-04T15:20:15.319577
+
+---
+
+# Review nhanh tour du lịch tham quan Bắc Ninh miễn phí & Kinh nghiệm du lịch văn hóa Kinh Bắc
+
+Bắc Ninh – vùng đất Kinh Bắc văn hiến nổi tiếng với những làn điệu dân ca Quan họ đằm thắm, các ngôi chùa cổ kính linh thiêng và các làng nghề truyền thống lâu đời.
+
+## Các điểm tham quan nổi tiếng tại Bắc Ninh
+- **Đền Đô (Thờ 8 vị vua nhà Lý):** Tọa lạc tại phường Đình Bảng, thị xã Từ Sơn. Kiến trúc cổ kính tráng lệ thờ các vị vua nhà Lý (Lý Thái Tổ, Lý Thái Tông...).
+- **Chùa Dâu:** Ngôi chùa Phật giáo cổ nhất Việt Nam (khởi công xây dựng từ thế kỷ 2), thờ Nữ thần mây (Pháp Vân).
+- **Chùa Bút Tháp:** Nổi tiếng với ngọn tháp Báo Nghiêm bằng đá và tượng Phật Bà Quan Âm nghìn mắt nghìn tay tác phẩm điêu khắc gỗ đỉnh cao thế kỷ 17.
+- **Làng tranh Đông Hồ:** Nơi lưu giữ nghệ thuật in tranh dân gian trên giấy điệp độc đáo.
+
+## Đặc sản ẩm thực Bắc Ninh không thể bỏ qua
+- **Bánh phu thê Đình Bảng (Bánh xu xê):** Bánh gói bằng lá dong tươi, nhân đậu xanh dừa nạo ngọt thanh thơm dẻo, biểu tượng cho tình nghĩa vợ chồng son sắt.
+- **Nem Bùi Phát Tích:** Làm từ thịt lợn nạc và bì thái nhỏ trộn thính gạo rang thơm lừng, ăn kèm lá nhội và chấm tương ớt.
+- **Bánh đa kế:** Bánh đa nướng giòn rụm rắc vừng đen và lạc rang thơm phức.
+
+## Kinh nghiệm di chuyển & Tiết kiệm
+- Bắc Ninh cách Hà Nội chỉ khoảng 30km, rất thích hợp đi phượt tự túc bằng xe máy hoặc xe bus (tuyến bus 54 từ Long Biên đến TP Bắc Ninh).
+- Du khách nên đi vào dịp Lễ hội đền Hùng hoặc Hội Lim (13 tháng Giêng âm lịch) để trải nghiệm hát Quan họ trên thuyền rồng.
