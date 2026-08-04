@@ -37,8 +37,10 @@ PAGEINDEX_API_KEY = os.getenv("PAGEINDEX_API_KEY", "")
 STANDARDIZED_DIR = Path(__file__).parent.parent / "data" / "standardized"
 LANDING_DIR = Path(__file__).parent.parent / "data" / "landing"
 
-# Timeout cho mỗi network call (giây)
+# Timeout cho network call thông thường (giây)
 _REQUEST_TIMEOUT = 10
+# Timeout riêng cho upload file lớn (giây)
+_UPLOAD_TIMEOUT = 120
 # Timeout cứng cho toàn bộ pageindex_search()
 _SEARCH_TIMEOUT = 25
 
@@ -46,17 +48,23 @@ _SEARCH_TIMEOUT = 25
 _DOC_IDS_CACHE: list[str] = []
 
 
-def _make_client():
-    """Tạo PageIndexClient với monkey-patch timeout cho requests."""
+def _make_client(upload: bool = False):
+    """Tạo PageIndexClient với monkey-patch timeout cho requests.
+    
+    Args:
+        upload: Nếu True dùng timeout dài hơn (120s) cho file upload.
+    """
     from pageindex.client import PageIndexClient
     import requests
+
+    timeout = _UPLOAD_TIMEOUT if upload else _REQUEST_TIMEOUT
 
     # Monkey-patch Session.request để luôn có timeout
     original_request = requests.Session.request
 
     def patched_request(self, method, url, **kwargs):
         if "timeout" not in kwargs:
-            kwargs["timeout"] = _REQUEST_TIMEOUT
+            kwargs["timeout"] = timeout
         return original_request(self, method, url, **kwargs)
 
     requests.Session.request = patched_request
@@ -92,7 +100,8 @@ def upload_documents() -> list[str]:
     if not PAGEINDEX_API_KEY:
         raise ValueError("PAGEINDEX_API_KEY chua set trong .env")
 
-    client = _make_client()
+    # Dùng timeout dài hơn (120s) vì PDF lớn cần thời gian upload
+    client = _make_client(upload=True)
     doc_ids = []
 
     # 1. PDF gốc (legal documents)
