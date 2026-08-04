@@ -37,23 +37,33 @@ TOP_P = 0.9
 # Chọn 0.3 vì: RAG cần factual, ít sáng tạo
 TEMPERATURE = 0.3
 
-# TODO: Chọn LLM model (OpenRouter model ID)
-LLM_MODEL = "openai/gpt-4o-mini"  # hoặc model ":free" nếu chưa có credit
+# Model miễn phí trên OpenRouter. Danh sách chứ không phải 1 chuỗi vì model ":free"
+# hay bị rút khỏi OpenRouter (404 "No endpoints found") hoặc hết lượt dùng chung
+# (429 "Provider returned error") — gọi lần lượt cho tới khi có model chạy được.
+# google/gemma-3-1b-it:free trong starter đã bị gỡ khỏi OpenRouter nên trả 404.
+# Đặt LLM_MODEL trong .env để ép dùng đúng 1 model cụ thể.
+LLM_MODELS = [
+    "google/gemma-4-26b-a4b-it:free",
+    "google/gemma-4-31b-it:free",
+    "openai/gpt-oss-20b:free",
+]
+LLM_MODEL = os.getenv("LLM_MODEL") or LLM_MODELS[0]
 
 
 # =============================================================================
 # SYSTEM PROMPT
 # =============================================================================
 
-SYSTEM_PROMPT = """Bạn là trợ lý trả lời câu hỏi về chính sách thương mại điện tử và hỗ trợ
-khách hàng (thanh toán, đổi trả, giao hàng, quyền riêng tư, quy định người bán).
+SYSTEM_PROMPT = """Bạn là Trợ Lý Hướng Dẫn Viên Du Lịch Thông Minh, chuyên tư vấn về
+du lịch Việt Nam (lịch trình, địa điểm, ẩm thực, phương tiện, lưu trú, kinh nghiệm).
 
 Quy tắc bắt buộc:
 1. Chỉ sử dụng thông tin từ context được cung cấp — KHÔNG bịa đặt
-2. Mỗi khẳng định phải có trích dẫn ngay sau, ví dụ: [Returns Policy, 2026]
-3. Nếu context không đủ thông tin → trả lời: "Tôi không thể xác minh thông tin này từ nguồn hiện có"
-4. Trả lời bằng tiếng Việt, có cấu trúc rõ ràng theo đoạn văn
-5. Không suy luận hay mở rộng ngoài những gì được nêu trong context"""
+2. Mỗi khẳng định phải có trích dẫn nguồn, ví dụ: [Hà Giang Travel Guide, 2026]
+3. Nếu context không đủ thông tin → trả lời: "Tôi không tìm thấy thông tin này trong tài liệu hiện có"
+4. Trả lời bằng tiếng Việt, có cấu trúc rõ ràng (dùng bullet/số khi liệt kê)
+5. Nhiệt tình, thân thiện như một hướng dẫn viên du lịch thực thụ
+6. Kết thúc bằng 1 câu gợi ý hoặc lưu ý hữu ích nếu phù hợp"""
 
 
 # =============================================================================
@@ -77,15 +87,12 @@ def reorder_for_llm(chunks: list[dict]) -> list[dict]:
     Returns:
         List reordered để maximize LLM attention.
     """
-    # TODO: Implement reordering
-    #
-    # if len(chunks) <= 2:
-    #     return chunks
-    #
-    # front = chunks[::2]   # index 0, 2, 4 -> đặt ở đầu
-    # back = chunks[1::2]   # index 1, 3    -> đặt ở cuối (reversed)
-    # return front + back[::-1]
-    raise NotImplementedError("Implement reorder_for_llm")
+    if len(chunks) <= 2:
+        return chunks
+
+    front = chunks[::2]   # index 0, 2, 4 -> đặt ở đầu
+    back = chunks[1::2]   # index 1, 3    -> đặt ở cuối (reversed)
+    return front + back[::-1]
 
 
 # =============================================================================
@@ -103,18 +110,15 @@ def format_context(chunks: list[dict]) -> str:
     Returns:
         Formatted context string.
     """
-    # TODO: Implement context formatting
-    #
-    # context_parts = []
-    # for i, chunk in enumerate(chunks, 1):
-    #     source = chunk.get("metadata", {}).get("source", f"Source {i}")
-    #     doc_type = chunk.get("metadata", {}).get("type", "unknown")
-    #     context_parts.append(
-    #         f"[Document {i} | Source: {source} | Type: {doc_type}]\n"
-    #         f"{chunk['content']}\n"
-    #     )
-    # return "\n---\n".join(context_parts)
-    raise NotImplementedError("Implement format_context")
+    context_parts = []
+    for i, chunk in enumerate(chunks, 1):
+        source = chunk.get("metadata", {}).get("source", f"Source {i}")
+        doc_type = chunk.get("metadata", {}).get("type", "unknown")
+        context_parts.append(
+            f"[Document {i} | Source: {source} | Type: {doc_type}]\n"
+            f"{chunk['content']}\n"
+        )
+    return "\n---\n".join(context_parts)
 
 
 # =============================================================================
@@ -143,51 +147,65 @@ def generate_with_citation(query: str, top_k: int = TOP_K) -> dict:
             'retrieval_source': str  # 'hybrid' hoặc 'pageindex'
         }
     """
-    # TODO: Implement generation pipeline
-    #
-    # # Step 1: Retrieve
-    # chunks = retrieve(query, top_k=top_k)
-    #
-    # # Step 2: Reorder
-    # reordered = reorder_for_llm(chunks)
-    #
-    # # Step 3: Format context
-    # context = format_context(reordered)
-    #
-    # # Step 4: Build prompt
-    # user_message = f"""Context:\n{context}\n\n---\n\nQuestion: {query}"""
-    #
-    # # Step 5: Call LLM (OpenRouter — OpenAI-compatible API)
-    # from openai import OpenAI
-    # api_key = os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY")
-    # client = OpenAI(api_key=api_key, base_url="https://openrouter.ai/api/v1")
-    #
-    # response = client.chat.completions.create(
-    #     model=LLM_MODEL,
-    #     messages=[
-    #         {"role": "system", "content": SYSTEM_PROMPT},
-    #         {"role": "user", "content": user_message}
-    #     ],
-    #     temperature=TEMPERATURE,
-    #     top_p=TOP_P,
-    # )
-    #
-    # answer = response.choices[0].message.content
-    #
-    # # Step 6: Return
-    # return {
-    #     "answer": answer,
-    #     "sources": chunks,
-    #     "retrieval_source": chunks[0].get("source", "hybrid") if chunks else "none"
-    # }
-    raise NotImplementedError("Implement generate_with_citation")
+    # Step 1: Retrieve
+    chunks = retrieve(query, top_k=top_k)
+
+    # Step 2: Reorder
+    reordered = reorder_for_llm(chunks)
+
+    # Step 3: Format context
+    context = format_context(reordered)
+
+    # Step 4: Build prompt
+    user_message = f"""Context:\n{context}\n\n---\n\nQuestion: {query}"""
+
+    # Step 5: Call LLM (OpenRouter — OpenAI-compatible API)
+    from openai import OpenAI
+    api_key = os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY")
+    client = OpenAI(api_key=api_key, base_url="https://openrouter.ai/api/v1")
+
+    # Thử lần lượt từng model cho tới khi có model trả lời được. Nếu .env đã ép
+    # LLM_MODEL thì thử model đó trước, sau đó mới tới các model dự phòng.
+    ung_vien = [LLM_MODEL] + [m for m in LLM_MODELS if m != LLM_MODEL]
+    answer = None
+    loi_cuoi = None
+
+    for model_id in ung_vien:
+        try:
+            response = client.chat.completions.create(
+                model=model_id,
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": user_message}
+                ],
+                temperature=TEMPERATURE,
+                top_p=TOP_P,
+            )
+            answer = response.choices[0].message.content
+            if answer:
+                break
+        except Exception as e:
+            loi_cuoi = e
+            print(f"  [Info] Model {model_id} không dùng được ({str(e)[:80]}), thử model kế tiếp...")
+
+    if not answer:
+        raise RuntimeError(
+            f"Không model nào trong {ung_vien} trả lời được. Lỗi cuối: {loi_cuoi}"
+        )
+
+    # Step 6: Return
+    return {
+        "answer": answer,
+        "sources": chunks,
+        "retrieval_source": chunks[0].get("source", "hybrid") if chunks else "none"
+    }
 
 
 if __name__ == "__main__":
     test_queries = [
-        "Shopee hỗ trợ những phương thức thanh toán nào?",
-        "Làm sao để yêu cầu đổi trả hay hoàn tiền?",
-        "Cần chuẩn bị bằng chứng gì khi yêu cầu hoàn tiền?",
+        "Hà Nội có gì chơi?",
+        "Hải Phòng đặc sản có gì",
+        "Hà Giang nên đi đâu?",
     ]
 
     for q in test_queries:
