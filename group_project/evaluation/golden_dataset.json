@@ -1,17 +1,87 @@
 [
   {
-    "question": "Người mua có thể yêu cầu trả hàng/hoàn tiền trong thời hạn bao lâu sau khi nhận hàng?",
-    "expected_answer": "Trong vòng 15 ngày kể từ khi giao hàng thành công (24 giờ đối với thực phẩm tươi sống/đông lạnh).",
-    "expected_context": "Trang Returns and Refunds Policy, mục Return/Refund Eligibility"
+    "question": "Hà Giang có những điểm du lịch nổi tiếng nào?",
+    "expected_answer": "Hà Giang nổi tiếng với Cao nguyên đá Đồng Văn, đèo Mã Pí Lèng, cột cờ Lũng Cú, thị trấn Đồng Văn, Mèo Vạc và ruộng bậc thang Hoàng Su Phì.",
+    "expected_context": "Hà Giang Travel Guide — mục Địa điểm tham quan"
   },
   {
-    "question": "Shopee hỗ trợ những phương thức thanh toán nào?",
-    "expected_answer": "ShopeePay Wallet, thẻ tín dụng/ghi nợ, trả góp qua thẻ, QR Code, chuyển khoản qua app ngân hàng, thẻ NAPAS, Apple Pay, Google Pay, và COD.",
-    "expected_context": "Trang Payment Methods Overview"
+    "question": "Lịch trình du lịch Hà Giang 3 ngày 2 đêm nên đi như thế nào?",
+    "expected_answer": "Ngày 1: Hà Nội → Hà Giang → Đồng Văn. Ngày 2: Đèo Mã Pí Lèng → Mèo Vạc → Lũng Cú. Ngày 3: Quản Bạ → Hà Nội.",
+    "expected_context": "Hà Giang Travel Guide — mục Lịch trình gợi ý"
   },
   {
-    "question": "Người bán không được đăng bán những sản phẩm nào?",
-    "expected_answer": "Hàng giả/nhái, sản phẩm bất hợp pháp, vi phạm sở hữu trí tuệ, và các mặt hàng nằm trong danh sách cấm của sàn.",
-    "expected_context": "Trang Product Listing Regulations, mục Prohibited Content"
+    "question": "Phương tiện di chuyển tốt nhất để khám phá Hà Giang là gì?",
+    "expected_answer": "Xe máy là phương tiện phổ biến và linh hoạt nhất để khám phá Hà Giang, đặc biệt trên các cung đường núi. Có thể thuê xe tại thành phố Hà Giang với giá từ 100.000–200.000 VNĐ/ngày.",
+    "expected_context": "Hà Giang Travel Guide — mục Phương tiện di chuyển"
+  },
+  {
+    "question": "Hà Nội có những khu phố cổ và di tích lịch sử nào đáng tham quan?",
+    "expected_answer": "Hà Nội có Phố cổ 36 phố phường, Hồ Hoàn Kiếm, Văn Miếu – Quốc Tử Giám, Lăng Chủ tịch Hồ Chí Minh, Hoàng thành Thăng Long và Bảo tàng Lịch sử Quốc gia.",
+    "expected_context": "Hà Nội Travel Guide — mục Di tích lịch sử"
+  },
+  {
+    "question": "Ẩm thực đặc trưng của Hà Nội gồm những món gì?",
+    "expected_answer": "Hà Nội nổi tiếng với phở Hà Nội, bún chả, bún riêu cua, chả cá Lã Vọng, cốm Vòng, bánh cuốn Thanh Trì và bia hơi vỉa hè.",
+    "expected_context": "Hà Nội Travel Guide — mục Ẩm thực"
+  },
+  {
+    "question": "Mùa đẹp nhất để đi du lịch Hà Nội là khi nào?",
+    "expected_answer": "Mùa thu (tháng 9–11) và mùa xuân (tháng 2–4) là thời điểm đẹp nhất để du lịch Hà Nội với thời tiết mát mẻ, ít mưa và có hoa nở.",
+    "expected_context": "Hà Nội Travel Guide — mục Thời điểm du lịch"
+  },
+  {
+    "question": "Huế có những di sản văn hóa thế giới nào?",
+    "expected_answer": "Quần thể di tích Cố đô Huế được UNESCO công nhận là Di sản Văn hóa Thế giới năm 1993, bao gồm Kinh thành Huế, Đại Nội, các lăng tẩm vua triều Nguyễn, chùa Thiên Mụ.",
+    "expected_context": "Huế Travel Guide — mục Di sản UNESCO"
+  },
+  {
+    "question": "Những lăng tẩm vua triều Nguyễn nào ở Huế nên tham quan?",
+    "expected_answer": "Lăng Khải Định, lăng Minh Mạng, lăng Tự Đức và lăng Gia Long là những lăng tẩm đẹp và quan trọng nhất cần tham quan khi đến Huế.",
+    "expected_context": "Huế Travel Guide — mục Lăng tẩm vua Nguyễn"
+  },
+  {
+    "question": "Đặc sản ẩm thực Huế có gì nổi tiếng?",
+    "expected_answer": "Huế nổi tiếng với bún bò Huế, cơm hến, bánh bèo, bánh nậm, bánh lọc, chả giò và các món cung đình Huế tinh tế.",
+    "expected_context": "Huế Travel Guide — mục Ẩm thực đặc sản"
+  },
+  {
+    "question": "Hải Phòng có những điểm tham quan nào đáng chú ý?",
+    "expected_answer": "Hải Phòng có Đảo Cát Bà (trong vịnh Lan Hạ), bãi biển Đồ Sơn, Khu dự trữ sinh quyển Cát Bà, Nhà hát lớn Hải Phòng và Bảo tàng Hải Phòng.",
+    "expected_context": "Hải Phòng Travel Guide — mục Địa điểm tham quan"
+  },
+  {
+    "question": "Đặc sản hải sản ở Hải Phòng có gì ngon?",
+    "expected_answer": "Hải Phòng nổi tiếng với bánh đa cua, nem cua bể, cá hấp, ghẹ rang muối, bề bề rang me và các món hải sản tươi sống ở Cát Bà.",
+    "expected_context": "Hải Phòng Travel Guide — mục Đặc sản ẩm thực"
+  },
+  {
+    "question": "Đảo Cát Bà Hải Phòng có những hoạt động gì thú vị?",
+    "expected_answer": "Tại Cát Bà có thể leo núi trong vườn quốc gia, chèo kayak, lặn ngắm san hô, tham quan làng chài, đi thuyền khám phá vịnh Lan Hạ và tắm biển.",
+    "expected_context": "Hải Phòng Travel Guide — mục Hoạt động du lịch Cát Bà"
+  },
+  {
+    "question": "Du lịch Kiên Giang có gì nổi bật?",
+    "expected_answer": "Kiên Giang nổi bật với đảo Phú Quốc (bãi biển đẹp, khu nghỉ dưỡng cao cấp), đảo Nam Du, vườn quốc gia U Minh Thượng và thành phố Rạch Giá ven biển.",
+    "expected_context": "Kiên Giang Travel Guide — mục Điểm du lịch nổi bật"
+  },
+  {
+    "question": "Phú Quốc (Kiên Giang) có những bãi biển nào đẹp nhất?",
+    "expected_answer": "Phú Quốc có bãi Sao (Long Beach), bãi Ông Lang, bãi Thơm, bãi Vũng Bầu và bãi Đất Đỏ là những bãi biển đẹp với nước xanh trong và cát trắng mịn.",
+    "expected_context": "Kiên Giang Travel Guide — mục Bãi biển Phú Quốc"
+  },
+  {
+    "question": "Cà Mau có những địa điểm du lịch sinh thái nào?",
+    "expected_answer": "Cà Mau có Vườn Quốc gia Mũi Cà Mau (cực nam Việt Nam), Khu Ramsar Mũi Cà Mau, rừng đước U Minh Hạ, đất mũi Cà Mau và các kênh rạch miệt vườn.",
+    "expected_context": "Cà Mau Travel Guide — mục Du lịch sinh thái"
+  },
+  {
+    "question": "Đặc sản Cà Mau có gì ngon và lạ?",
+    "expected_answer": "Cà Mau nổi tiếng với cua Cà Mau (thịt chắc, ngọt), tôm khô, ba khía muối, cá thác lác, lẩu mắm và các món từ hải sản miền Tây đặc trưng.",
+    "expected_context": "Cà Mau Travel Guide — mục Đặc sản ẩm thực"
+  },
+  {
+    "question": "Nên đặt phòng khách sạn loại nào khi đi du lịch Hà Giang?",
+    "expected_answer": "Tại Hà Giang có nhiều lựa chọn từ nhà nghỉ bình dân (100k–200k/đêm), homestay trải nghiệm văn hóa địa phương đến khách sạn 3 sao ở thành phố Hà Giang. Homestay tại Đồng Văn rất được ưa chuộng.",
+    "expected_context": "Hà Giang Travel Guide — mục Lưu trú"
   }
 ]
