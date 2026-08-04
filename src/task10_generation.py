@@ -37,8 +37,17 @@ TOP_P = 0.9
 # Chọn 0.3 vì: RAG cần factual, ít sáng tạo
 TEMPERATURE = 0.3
 
-LLM_MODEL = "google/gemma-3-1b-it:free"  # Model miễn phí trên OpenRouter
- # hoặc model ":free" nếu chưa có credit
+# Model miễn phí trên OpenRouter. Danh sách chứ không phải 1 chuỗi vì model ":free"
+# hay bị rút khỏi OpenRouter (404 "No endpoints found") hoặc hết lượt dùng chung
+# (429 "Provider returned error") — gọi lần lượt cho tới khi có model chạy được.
+# google/gemma-3-1b-it:free trong starter đã bị gỡ khỏi OpenRouter nên trả 404.
+# Đặt LLM_MODEL trong .env để ép dùng đúng 1 model cụ thể.
+LLM_MODELS = [
+    "google/gemma-4-26b-a4b-it:free",
+    "google/gemma-4-31b-it:free",
+    "openai/gpt-oss-20b:free",
+]
+LLM_MODEL = os.getenv("LLM_MODEL") or LLM_MODELS[0]
 
 
 # =============================================================================
@@ -154,17 +163,34 @@ def generate_with_citation(query: str, top_k: int = TOP_K) -> dict:
     api_key = os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY")
     client = OpenAI(api_key=api_key, base_url="https://openrouter.ai/api/v1")
 
-    response = client.chat.completions.create(
-        model=LLM_MODEL,
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_message}
-        ],
-        temperature=TEMPERATURE,
-        top_p=TOP_P,
-    )
+    # Thử lần lượt từng model cho tới khi có model trả lời được. Nếu .env đã ép
+    # LLM_MODEL thì thử model đó trước, sau đó mới tới các model dự phòng.
+    ung_vien = [LLM_MODEL] + [m for m in LLM_MODELS if m != LLM_MODEL]
+    answer = None
+    loi_cuoi = None
 
-    answer = response.choices[0].message.content
+    for model_id in ung_vien:
+        try:
+            response = client.chat.completions.create(
+                model=model_id,
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": user_message}
+                ],
+                temperature=TEMPERATURE,
+                top_p=TOP_P,
+            )
+            answer = response.choices[0].message.content
+            if answer:
+                break
+        except Exception as e:
+            loi_cuoi = e
+            print(f"  [Info] Model {model_id} không dùng được ({str(e)[:80]}), thử model kế tiếp...")
+
+    if not answer:
+        raise RuntimeError(
+            f"Không model nào trong {ung_vien} trả lời được. Lỗi cuối: {loi_cuoi}"
+        )
 
     # Step 6: Return
     return {
