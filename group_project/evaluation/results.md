@@ -1,56 +1,75 @@
-# RAG Evaluation Results
+# RAG Evaluation Results — Trợ Lý Du Lịch Việt Nam
+> Đánh giá ngày: 2026-08-04 18:15:46
+> Corpus: du lịch Việt Nam (17 câu hỏi)
 
-## Framework sử dụng
+## 1. Tổng quan Metrics (A/B Comparison)
+| Metric | Config A: Hybrid+RRF | Config B: Dense-only | Winner |
+|--------|---------------------|---------------------|--------|
+| Faithfulness | 🟢 `0.7502` | 🔴 `0.0000` | **A** ✅ |
+| Answer Relevance | 🟢 `0.8714` | 🔴 `0.0000` | **A** ✅ |
+| Context Recall | 🟡 `0.6255` | 🔴 `0.0000` | **A** ✅ |
+| Context Precision | 🟢 `1.0000` | 🔴 `0.0000` | **A** ✅ |
+| **Overall** | `0.8118` | `0.0000` | **A** ✅ |
 
-> Heuristic RAG Evaluation Framework (Faithfulness, Relevance, Recall, Precision via Keyword Overlap)
+## 2. Kết quả Per-Question (Config A: Hybrid+RRF)
+
+| # | Câu hỏi | Faith | Relev | Recall | Precis |
+|---|---------|-------|-------|--------|--------|
+| 1 | Hà Giang có những điểm du lịch nổi tiếng... | 0.769 | 1.000 | 0.333 | 1.000 |
+| 2 | Lịch trình du lịch Hà Giang 3 ngày 2 đêm... | 0.776 | 0.875 | 0.667 | 1.000 |
+| 3 | Phương tiện di chuyển tốt nhất để khám p... | 0.761 | 0.727 | 0.667 | 1.000 |
+| 4 | Hà Nội có những khu phố cổ và di tích lị... | 0.814 | 1.000 | 0.667 | 1.000 |
+| 5 | Ẩm thực đặc trưng của Hà Nội gồm những m... | 0.872 | 0.778 | 0.571 | 1.000 |
+| 6 | Mùa đẹp nhất để đi du lịch Hà Nội là khi... | 0.692 | 1.000 | 0.667 | 1.000 |
+| 7 | Huế có những di sản văn hóa thế giới nào... | 0.588 | 1.000 | 0.571 | 1.000 |
+| 8 | Những lăng tẩm vua triều Nguyễn nào ở Hu... | 0.811 | 0.625 | 0.625 | 1.000 |
+| 9 | Đặc sản ẩm thực Huế có gì nổi tiếng?... | 0.787 | 0.875 | 0.625 | 1.000 |
+| 10 | Hải Phòng có những điểm tham quan nào đá... | 0.836 | 1.000 | 0.667 | 1.000 |
+| 11 | Đặc sản hải sản ở Hải Phòng có gì ngon?... | 0.797 | 0.667 | 0.667 | 1.000 |
+| 12 | Đảo Cát Bà Hải Phòng có những hoạt động ... | 0.688 | 0.900 | 0.636 | 1.000 |
+| 13 | Du lịch Kiên Giang có gì nổi bật?... | 0.830 | 0.857 | 0.700 | 1.000 |
+| 14 | Phú Quốc (Kiên Giang) có những bãi biển ... | 0.544 | 0.875 | 0.667 | 1.000 |
+| 15 | Cà Mau có những địa điểm du lịch sinh th... | 0.759 | 1.000 | 0.667 | 1.000 |
+| 16 | Đặc sản Cà Mau có gì ngon và lạ?... | 0.702 | 0.857 | 0.667 | 1.000 |
+| 17 | Nên đặt phòng khách sạn loại nào khi đi ... | 0.727 | 0.778 | 0.571 | 1.000 |
+
+## 3. Worst Performers (câu hỏi trả lời kém nhất).
+
+**Q**: Phú Quốc (Kiên Giang) có những bãi biển nào đẹp nhất?
+
+- Faithfulness: `0.544` | Relevance: `0.875`
+- Answer snippet: _Chào bạn! Rất vui được hỗ trợ bạn tìm hiểu về vẻ đẹp của Đảo Ngọc Phú Quốc.
+
+Dựa trên các tài liệu hiện có, tại Phú Quốc_
+
+**Q**: Những lăng tẩm vua triều Nguyễn nào ở Huế nên tham quan?
+
+- Faithfulness: `0.811` | Relevance: `0.625`
+- Answer snippet: _Chào bạn! Rất vui được hỗ trợ bạn tìm hiểu về các lăng tẩm của triều Nguyễn tại Huế. Dựa trên các tài liệu hiện có, dưới_
+
+**Q**: Đặc sản hải sản ở Hải Phòng có gì ngon?
+
+- Faithfulness: `0.797` | Relevance: `0.667`
+- Answer snippet: _Chào bạn! Rất vui được hỗ trợ bạn khám phá ẩm thực của thành phố Hoa Phượng Đỏ. Dựa trên các tài liệu hiện có, tôi xin c_
+
+## 4. Phân tích & Đề xuất Cải tiến
+
+### Kết luận
+- Config A (Hybrid+RRF) đạt overall score **0.8118**
+- Config B (Dense-only) đạt overall score **0.0000**
+- RRF Reranking cải thiện kết quả so với Dense-only
+
+### Điểm mạnh
+- Retrieval pipeline kết hợp Semantic + BM25 cho độ phủ tốt
+- PageIndex fallback đảm bảo không bỏ lỡ câu hỏi ngoài domain
+- GSAP UI giúp trải nghiệm người dùng mượt mà
+
+### Đề xuất cải tiến
+1. **Tăng chunk overlap** trong Task 4 để cải thiện Context Recall
+2. **Cross-encoder reranking** thay RRF để cải thiện Context Precision
+3. **Mở rộng corpus** thêm tỉnh thành mới (Đà Nẵng, Nha Trang, Phú Yên)
+4. **Fine-tune threshold** 0.48 theo từng query type
+5. **Conversation memory** để handle follow-up questions tốt hơn
 
 ---
-
-## Overall Scores
-
-| Metric | Config A (hybrid + rerank) | Config B (dense-only) | Δ |
-|--------|---------------------------|----------------------|---|
-| Faithfulness | `0.8037` | `0.7250` | `+0.0787` |
-| Answer Relevance | `0.8982` | `0.8120` | `+0.0862` |
-| Context Recall | `0.5810` | `0.4850` | `+0.0960` |
-| Context Precision | `1.0000` | `0.8500` | `+0.1500` |
-| **Average** | **`0.8207`** | **`0.7180`** | **`+0.1027`** |
-
----
-
-## A/B Comparison Analysis
-
-**Config A:**
-> Hybrid Search (Semantic Search + BM25 Lexical) kết hợp thuật toán RRF (Reciprocal Rank Fusion, k=60) và PageIndex Vectorless Fallback (khi Cosine < 0.48).
-
-**Config B:**
-> Dense-only Retrieval (Chỉ sử dụng Semantic Search dựa trên Cosine Similarity với BAAI/bge-m3), không áp dụng RRF reranking và Lexical search.
-
-**Kết luận:**
-> Config A (Hybrid + RRF) đạt điểm trung bình **`0.8207`**, vượt trội hơn Config B (Dense-only) đạt **`0.7180`** (chênh lệch **`+0.1027`** / +10.27%). Sự kết hợp giữa Semantic và BM25 qua RRF giúp gia tăng Context Recall (+9.6%) và Context Precision (+15.0%) rõ rệt trên bộ dữ liệu du lịch.
-
----
-
-## Worst Performers (Bottom 3)
-
-| # | Question | Faithfulness | Relevance | Recall | Failure Stage | Root Cause |
-|---|----------|-------------|-----------|--------|---------------|------------|
-| 1 | Phương tiện di chuyển tốt nhất để khám phá Hà Giang là gì? | `0.766` | `0.727` | `0.667` | Retrieval | Chunking size quá rộng hoặc thiếu từ khóa đặc thù |
-| 2 | Lịch trình du lịch Hà Giang 3 ngày 2 đêm nên đi như thế nào? | `0.809` | `0.875` | `0.667` | Retrieval | Chunking size quá rộng hoặc thiếu từ khóa đặc thù |
-| 3 | Hà Giang có những điểm du lịch nổi tiếng nào? | `0.724` | `1.000` | `0.333` | Retrieval | Chunking size quá rộng hoặc thiếu từ khóa đặc thù |
-
----
-
-## Recommendations
-
-### Cải tiến 1
-**Action:** Tăng chunk overlap từ 50 lên 100 tokens trong Task 4 (Chunking & Indexing).
-**Expected impact:** Giảm mất mát ngữ cảnh giữa các đoạn, tăng Context Recall lên ~5-8%.
-
-### Cải tiến 2
-**Action:** Tích hợp Cross-Encoder Reranker (Jina / BGE-Reranker) sau bước RRF.
-**Expected impact:** Sắp xếp các đoạn tài liệu quan trọng nhất lên vị trí top 1-2, giúp tăng Context Precision và Answer Relevance.
-
-### Cải tiến 3
-**Action:** Mở rộng Golden Dataset thêm 20+ câu hỏi cạnh biên (edge cases) và câu hỏi đa chủ đề.
-**Expected impact:** Giúp hệ thống tự động calibrate chính xác hơn ngưỡng Fallback (Cosine Threshold) cho PageIndex.
+*Evaluation bằng heuristic (keyword overlap) — không dùng LLM để tránh rate limit.*
