@@ -17,19 +17,62 @@ BM25 hoạt động thế nào:
 
 from pathlib import Path
 
-# Load corpus từ data/standardized/
-CORPUS: list[dict] = []  # List of {'content': str, 'metadata': dict}
-
 DATA_DIR = Path(__file__).parent.parent / "data" / "standardized"
-if DATA_DIR.exists():
-    for md_file in DATA_DIR.rglob("*.md"):
-        doc_type = "legal" if "legal" in str(md_file) else "news"
-        CORPUS.append({
-            "content": md_file.read_text(encoding="utf-8", errors="ignore"),
-            "metadata": {"source": md_file.name, "type": doc_type}
-        })
+
+
+def load_corpus() -> list[dict]:
+    """
+    Nạp corpus cho BM25 — dùng ĐÚNG bộ chunk mà Task 4 đã index vào ChromaDB.
+
+    Vì sao phải chunk thay vì đọc nguyên file? Hai lý do:
+      1. BM25 trên 8 file nguyên vẹn gần như vô dụng: chỉ có 8 "document" để xếp hạng,
+         lại bị length normalization dìm đúng file dài nhưng liên quan nhất.
+      2. Task 7 gộp thứ hạng bằng RRF. Nếu Semantic trả chunk 800 ký tự còn BM25 trả
+         nguyên file thì hai danh sách không bao giờ trùng một phần tử nào → RRF chỉ
+         xen kẽ 2 danh sách chứ không có "đồng thuận giữa 2 ranker".
+    """
+    try:
+        try:
+            from .task4_chunking_indexing import chunk_documents, load_documents
+        except ImportError:  # khi chạy trực tiếp: python src/task6_lexical_search.py
+            from task4_chunking_indexing import chunk_documents, load_documents
+
+        chunks = chunk_documents(load_documents())
+        if chunks:
+            return [{"content": c["content"], "metadata": c["metadata"]} for c in chunks]
+    except Exception as e:
+        print(f"  [Info] Không dùng được chunker của Task 4 ({e}), tạm đọc nguyên file .md")
+
+    # Fallback: đọc nguyên file (kém hơn, chỉ để module vẫn chạy được khi thiếu Task 4)
+    fallback = []
+    if DATA_DIR.exists():
+        for md_file in DATA_DIR.rglob("*.md"):
+            doc_type = "legal" if "legal" in str(md_file) else "news"
+            fallback.append({
+                "content": md_file.read_text(encoding="utf-8", errors="ignore"),
+                "metadata": {"source": md_file.name, "type": doc_type}
+            })
+    return fallback
+
+
+CORPUS: list[dict] = load_corpus()  # List of {'content': str, 'metadata': dict}
 
 bm25_index = None
+
+
+def tokenize(text: str) -> list[str]:
+    """
+    Tách token cho BM25. Dùng regex \\w+ thay vì split() để bỏ dấu câu và ký tự
+    markdown — split() để lại token rác kiểu "**bánh", "#", "-" nên từ khoá thật
+    không khớp được. Corpus và query bắt buộc dùng chung hàm này.
+
+    Hạn chế đã biết: đây là tách theo âm tiết, chưa phải tách từ tiếng Việt, nên
+    "Hà Giang" thành 2 token rời "hà" + "giang" và dễ khớp nhầm với văn bản khác.
+    Muốn chính xác hơn thì dùng underthesea.word_tokenize (+5 bonus theo đề bài).
+    """
+    import re
+
+    return re.findall(r"\w+", text.lower(), flags=re.UNICODE)
 
 
 def build_bm25_index(corpus: list[dict]):
@@ -43,8 +86,7 @@ def build_bm25_index(corpus: list[dict]):
         return None
     from rank_bm25 import BM25Okapi
 
-    # Tokenize - có thể đơn giản split(), hoặc dùng underthesea cho tiếng Việt
-    tokenized_corpus = [doc["content"].lower().split() for doc in corpus]
+    tokenized_corpus = [tokenize(doc["content"]) for doc in corpus]
     bm25 = BM25Okapi(tokenized_corpus)
     return bm25
 
@@ -72,7 +114,7 @@ def lexical_search(query: str, top_k: int = 10) -> list[dict]:
     if bm25_index is None or not CORPUS:
         return []
 
-    tokenized_query = query.lower().split()
+    tokenized_query = tokenize(query)
     scores = bm25_index.get_scores(tokenized_query)
 
     # Get top_k indices
